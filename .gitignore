@@ -1,0 +1,5 @@
+
+#Secret Files
+*.env
+
+password.txt
