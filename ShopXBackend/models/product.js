@@ -59,5 +59,15 @@ const productSchema=new mongoose.Schema({
     }
 })
 
+//creating virtual id
+//it is used to convert _id to id for easy understanding in frontend
+productSchema.virtual('id').get(function(){
+    return this._id.toHexString(); //converting object id to string
+});
+
+productSchema.set('toJSON',{
+    virtuals:true //to include virtual id in response
+})
+
 //exporting product model
 module.exports=mongoose.model('Product',productSchema);
