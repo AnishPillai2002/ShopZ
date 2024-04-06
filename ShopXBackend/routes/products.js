@@ -3,13 +3,23 @@ const router = express.Router(); //router is used to create routes
 const Product=require('../models/product'); //importing product model
 const Category=require('../models/category'); //importing category model
 
+const mongoose=require('mongoose'); //mongoose is a mongodb object modeling tool designed to work in an asynchronous environment
+
 //routes
 //get request for products
 router.get(`/`, async(req, res) => {
-
     //fetching all products from database
+
+    //passing query parameter
+    //localhost:3000/api/v1/products?categories=2342342,2342342
+    let filter={} //filter is an object
+    if(req.query.categories){ //if categories are provided
+
+        filter={category:req.query.categories.split(',')} //splitting the categories by comma and storing them in an array
+    }
+
     //find() is a promise so we use then and catch/ or we can also use async await
-    const productList=await Product.find();
+    const productList=await Product.find(filter); //filtering the products by category
 
     //if productList is empty
     if(!productList){
@@ -17,10 +27,7 @@ router.get(`/`, async(req, res) => {
             success:false
         });
     }
-
     res.send(productList);
-
-
 });
 
 //GET request for single product
@@ -64,7 +71,6 @@ router.post(`/`, async (req, res) => {
 
     //saving the product to database
     //save() is a promise so we use then and catch/ or we can also use async await
-
     data=await product.save();
 
     if(!data){
@@ -72,20 +78,15 @@ router.post(`/`, async (req, res) => {
     }
 
     res.send(data);
-    // product.save().then((data)=>{
-    //     res.status(201).json(data); //201 is status code for created
-    // }).catch((err)=>{
-    //     res.status(500).json({  //500 is status code for internal server error
-    //         error:err,
-    //         success:false
-    //     });
-    // })
 })
 
 
 //PUT request for products
 router.put('/:id',async(req,res)=>{
 
+    if(!mongoose.isValidObjectId(req.params.id)){//checking if the id is valid or not
+        res.status(400).send('Invalid Category');
+    } 
     //validating category id
     const category = await Category.findById(req.body.category);
 
@@ -108,11 +109,9 @@ router.put('/:id',async(req,res)=>{
         isFeatured:req.body.isFeatured,
     },{new:true});//new:true is used to get the updated product
 
-
     if(!product){
         res.status(500).send('the product cannot be updated');//500 is status code for internal server error
     }
-
     res.send(product);
 });
 
@@ -129,6 +128,48 @@ router.delete('/:id',(req,res)=>{
     }).catch(err=>{
         return res.status(400).json({success:false,error:err}); //400 is status code for bad request
     });
-
 });
+
+
+//API TO GET PRODUCT COUNT
+router.get(`/get/count`,(req,res)=>{
+
+    //counting the number of products
+    Product.countDocuments().then(count=>{
+        res.send({
+            productCount:count
+        });
+    }).catch(err=>{
+        res.status(500).json({  //500 is status code for internal server error
+            success:false
+        });
+    });
+});
+
+//API TO GET FEATURED PRODUCTS
+//count is optional(? is used to make it optional)
+router.get(`/get/featured/:count?`,async(req,res)=>{
+
+    //fetching featured products
+    const count=req.params.count; //if count is not provided then it is set to 0
+
+    let products;
+    if(count){
+        products=await Product.find({isFeatured:true}).limit(+count);//limiting the number of products
+        
+    }else{
+        products=await Product.find({isFeatured:true});
+    }
+
+    if(!products){
+        res.status(500).send({  //500 is status code for internal server error
+            success:false
+        });
+    }
+    res.send(products);
+});
+
+
+
+
 module.exports = router; //exporting router
