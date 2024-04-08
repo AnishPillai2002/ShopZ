@@ -2,8 +2,14 @@
 
 const express = require('express');
 const router = express.Router();
+require('dotenv/config'); //used to access environment variables
 const User = require('../models/user');
 var bcrypt = require('bcryptjs'); //used to hash password for security purpose
+const jwt = require('jsonwebtoken'); //used to generate token for user authentication
+
+//JWT Token  is a standard way to securely send information between two parties 
+//as a JSON object. JWTs are often used for authentication and authorization, 
+//and are a popular way to authenticate users in a microservice architecture.
 
 //POST request for user registration
 router.post(`/`, (req, res) => {
@@ -56,4 +62,35 @@ router.get('/:id',(req,res)=>{
     }); //finding category by id
 });
 
+
+//POST request to login
+router.post('/login',async(req,res)=>{
+    const user=await User.findOne({email:req.body.email});
+    const secret=process.env.secret;
+    if(!user){
+        return res.status(404).send('User not found');
+    }
+
+    //compare password with hashed password
+    if(user && bcrypt.compareSync(req.body.password,user.passwordHash)){
+        
+        
+        //generate token
+        const token=jwt.sign(
+            {
+                userId:user.id,
+                isAdmin:user.isAdmin
+            },
+            'secret',
+            {expiresIn:'1d'} //token will expire in 1 day, the app will logout the user after 1 day
+        );
+
+        res.send({user:user.email,token:token});
+
+        return res.status(200).send('User authenticated');
+    }else{
+        return res.status(400).send('Password is wrong');
+    }
+
+});
 module.exports = router; //exporting the router
