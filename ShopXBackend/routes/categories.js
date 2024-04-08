@@ -27,12 +27,9 @@ router.get('/:id',(req,res)=>{
         }else{
             return res.status(404).json({success:false,message:'category not found'}); //404 is status code for not found
         }
-
     }).catch((err)=>{
         return res.status(400).json({success:false,error:err}); //400 is status code for bad request
     }); //finding category by id
-
-    
 });
 
 //PUT request for category
