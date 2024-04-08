@@ -75,13 +75,13 @@ router.post('/login',async(req,res)=>{
     if(user && bcrypt.compareSync(req.body.password,user.passwordHash)){
         
         
-        //generate token
+        //generate JWT token for user authentication
         const token=jwt.sign(
             {
                 userId:user.id,
                 isAdmin:user.isAdmin
             },
-            'secret',
+            secret,
             {expiresIn:'1d'} //token will expire in 1 day, the app will logout the user after 1 day
         );
 

@@ -6,8 +6,9 @@ const mongoose=require('mongoose'); //used to connect to mongodb
 const cors=require('cors'); //used to enable cross origin resource sharing
 require('dotenv/config'); //used to access environment variables
 
+const authJwt = require('./helpers/jwt'); //used to protect the api routes from unauthorized access
 
-
+const errorHandler = require('./helpers/errorhandler'); //used to handle errors
 
 app.use(cors()); //enabling cors
 app.options('*',cors()); //enabling cors options
@@ -24,6 +25,10 @@ const api=process.env.API_URL;
 
 
 //middleware
+app.use(authJwt()); //using authJwt middleware to protect api routes
+
+app.use(errorHandler);
+
 
 app.use(bodyParser.json()); //bodyparser is used to parse request body to json
 app.use(morgan('tiny')); //morgan is used to log request details
