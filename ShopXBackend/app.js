@@ -15,6 +15,7 @@ app.options('*',cors()); //enabling cors options
 //importing routes
 const productRouter=require('./routes/products'); //importing product router
 const categoryRouter=require('./routes/categories'); //importing category router
+const userRouter=require('./routes/users'); //importing user router
 
 
 //api
@@ -29,7 +30,7 @@ app.use(morgan('tiny')); //morgan is used to log request details
 
 app.use(`${api}/products`,productRouter); //using product router
 app.use(`${api}/categories`,categoryRouter); //using category router
-
+app.use(`${api}/users`,userRouter); //using user router
 
 
 
