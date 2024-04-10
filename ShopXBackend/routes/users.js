@@ -11,7 +11,39 @@ const jwt = require('jsonwebtoken'); //used to generate token for user authentic
 //as a JSON object. JWTs are often used for authentication and authorization, 
 //and are a popular way to authenticate users in a microservice architecture.
 
-//POST request for admin registration
+
+
+//GET request for Getting all the User
+router.get(`/`, async(req, res) => {
+    //find() is a promise so we use then and catch/ or we can also use async await
+    const userList=await User.find().select('-passwordHash');//select is used to exclude passwordHash from response
+    //if productList is empty
+    if(!userList){
+        res.status(500).json({  //500 is status code for internal server error
+            success:false
+        });
+    }
+    res.send(userList); //sending categoryList as response
+});
+
+
+
+//GET request for Single User by id
+router.get('/:id',(req,res)=>{
+     User.findById(req.params.id).select('-passwordHash').then((data)=>{ //select is used to exclude passwordHash from response
+        if(data){
+            return res.status(200).json(data); //200 is status code for ok
+        }else{
+            return res.status(404).json({success:false,message:'User not found'}); //404 is status code for not found
+        }
+    }).catch((err)=>{
+        return res.status(400).json({success:false,error:err}); //400 is status code for bad request
+    }); //finding category by id
+});
+
+
+
+//POST request for Admin Registration
 router.post(`/`, (req, res) => {
     let user=new User({
         name:req.body.name,
@@ -33,36 +65,9 @@ router.post(`/`, (req, res) => {
     });
 });
 
-//GET request for getting all User
-router.get(`/`, async(req, res) => {
 
-    //find() is a promise so we use then and catch/ or we can also use async await
-    const userList=await User.find().select('-passwordHash');//select is used to exclude passwordHash from response
-    //if productList is empty
-    if(!userList){
-        res.status(500).json({  //500 is status code for internal server error
-            success:false
-        });
-    }
-    res.send(userList); //sending categoryList as response
-});
 
-//GET request for a single user by id
-//get request for category by id
-router.get('/:id',(req,res)=>{
-    //fetching category by id from database
-     User.findById(req.params.id).select('-passwordHash').then((data)=>{
-        if(data){
-            return res.status(200).json(data); //200 is status code for ok
-        }else{
-            return res.status(404).json({success:false,message:'User not found'}); //404 is status code for not found
-        }
-    }).catch((err)=>{
-        return res.status(400).json({success:false,error:err}); //400 is status code for bad request
-    }); //finding category by id
-});
-
-//POST request for User registration
+//POST request for User Registration   (Public API)
 router.post(`/register`, (req, res) => {
     let user=new User({
         name:req.body.name,
@@ -88,18 +93,16 @@ router.post(`/register`, (req, res) => {
 });
 
 
-//POST request to login
+
+//POST request to Login   (Public API)
 router.post('/login',async(req,res)=>{
     const user=await User.findOne({email:req.body.email});
     const secret=process.env.secret;
     if(!user){
         return res.status(404).send('User not found');
     }
-
     //compare password with hashed password
-    if(user && bcrypt.compareSync(req.body.password,user.passwordHash)){
-        
-        
+    if(user && bcrypt.compareSync(req.body.password,user.passwordHash)){    
         //generate JWT token for user authentication
         const token=jwt.sign(
             {
@@ -109,12 +112,46 @@ router.post('/login',async(req,res)=>{
             secret,
             {expiresIn:'1d'} //token will expire in 1 day, the app will logout the user after 1 day
         );
-
-        res.send({user:user.email,token:token,message:'User authenticated'});
-
+        return res.send({user:user.email,token:token,message:'User authenticated'});
     }else{
         return res.status(400).send('Password is wrong');
     }
 
 });
+
+
+
+//DELETE request for User
+router.delete('/:id',(req,res)=>{
+    //deleting user by id
+    const user= User.findByIdAndDelete(req.params.id).then(user=>{
+        if(user){
+            return res.status(200).json({success:true,message:'The User is deleted!'}); //200 is status code for ok
+        }else{
+            return res.status(404).json({success:false,message:'User not found'}); //404 is status code for not found
+        }
+    }).catch(err=>{
+        return res.status(400).json({success:false,error:err}); //400 is status code for bad request
+    });
+});
+
+
+
+//API to get the Count of Users
+router.get(`/get/count`,(req,res)=>{
+    //counting the number of products
+    User.countDocuments().then(count=>{
+        res.send({
+            UserCount:count
+        });
+    }).catch(err=>{
+        res.status(500).json({  //500 is status code for internal server error
+            success:false
+        });
+    });
+});
+
+
+
+//exporting the router
 module.exports = router; //exporting the router
