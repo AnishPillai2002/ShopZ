@@ -27,7 +27,7 @@ const api=process.env.API_URL;
 //middleware
 app.use(authJwt()); //using authJwt middleware to protect api routes
 
-app.use(errorHandler);
+app.use(errorHandler); //using errorHandler middleware to handle errors
 
 
 app.use(bodyParser.json()); //bodyparser is used to parse request body to json
