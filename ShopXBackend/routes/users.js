@@ -80,7 +80,10 @@ router.post(`/register`, (req, res) => {
     user.save().then((createdUser)=>{
         res.status(201).json(createdUser); //201 is status code for created
     }).catch((err)=>{
-        res.status(500).send('User Cannot be Created');//500 is status code for internal server error
+        res.status(500).json({
+            error:err,
+            success:false
+        });//500 is status code for internal server error
     });
 });
 
@@ -101,15 +104,14 @@ router.post('/login',async(req,res)=>{
         const token=jwt.sign(
             {
                 userId:user.id,
-                isAdmin:user.isAdmin
+                isAdmin:user.isAdmin //if user is admin then isAdmin will be true
             },
             secret,
             {expiresIn:'1d'} //token will expire in 1 day, the app will logout the user after 1 day
         );
 
-        res.send({user:user.email,token:token});
+        res.send({user:user.email,token:token,message:'User authenticated'});
 
-        return res.status(200).send('User authenticated');
     }else{
         return res.status(400).send('Password is wrong');
     }
